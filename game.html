@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Tic Tac Toe Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #container {
+            display: flex;
+            width: 100%;
+        }
+        #left-screen, #right-screen {
+            width: 50%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #left-screen {
+            background-color: #f0f8ff;
+        }
+        #right-screen {
+            background-color: #fff0f0;
+        }
+        #question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #answer {
+            font-size: 18px;
+            padding: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        #submit {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background-color: #ddd;
+        }
+        #leaderboards {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid black;
+            z-index: 10;
+            width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        #close-leaderboard {
+            margin-top: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="left-screen">
+            <div id="question"></div>
+            <input type="number" id="answer" placeholder="Enter your answer">
+            <button id="submit">Submit</button>
+            <div id="math-feedback"></div>
+        </div>
+        <div id="right-screen">
+            <div id="board"></div>
+            <div id="ttt-feedback"></div>
+        </div>
+    </div>
+    <div id="leaderboards">
+        <h2>Math Leaderboard</h2>
+        <table id="math-leaderboard"></table>
+        <h2>Tic Tac Toe Leaderboard</h2>
+        <table id="ttt-leaderboard"></table>
+        <button id="close-leaderboard">Close</button>
+    </div>
+
+    <script>
+        let username = prompt("Please enter your username:");
+        if (!username) username = "Player";
+
+        // Math game variables
+        let currentQuestion = {};
+        let mathStartTime;
+        let totalMathTime = 0;
+        let correctAnswers = 0;
+
+        // Tic Tac Toe variables
+        let board = Array(9).fill(null);
+        let player = 'X';
+        let computer = 'O';
+        let currentTurn = player;
+        let movesAvailable = 0;
+        let tttStartTime;
+        let tttEndTime;
+        let gameOver = false;
+
+        // Leaderboard
+        let leaderboards = JSON.parse(localStorage.getItem('leaderboards')) || [];
+
+        function generateQuestion() {
+            const type = Math.random() < 0.5 ? 'multiplication' : 'division';
+            let a, b;
+            if (type === 'multiplication') {
+                a = Math.floor(Math.random() * 11) + 2; // 2-12
+                b = Math.floor(Math.random() * 10) + 1; // 1-10
+                currentQuestion = { q: `${a} × ${b} = ?`, ans: a * b, type };
+            } else {
+                b = Math.floor(Math.random() * 11) + 2; // 2-12
+                const product = b * (Math.floor(Math.random() * 10) + 1); // ensure divisible
+                currentQuestion = { q: `${product} ÷ ${b} = ?`, ans: product / b, type };
+            }
+            document.getElementById('question').textContent = currentQuestion.q;
+            mathStartTime = Date.now();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            const timeTaken = Date.now() - mathStartTime;
+            if (userAnswer === currentQuestion.ans) {
+                totalMathTime += timeTaken;
+                correctAnswers++;
+                movesAvailable++;
+                document.getElementById('math-feedback').textContent = 'Correct! You can make a move in Tic Tac Toe.';
+                if (!tttStartTime) tttStartTime = Date.now();
+            } else {
+                alert('Wrong answer! Try again.');
+                document.getElementById('math-feedback').textContent = 'Incorrect. Please try again.';
+            }
+            document.getElementById('answer').value = '';
+            generateQuestion();
+        }
+
+        function initBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', handleCellClick);
+                boardDiv.appendChild(cell);
+            }
+        }
+
+        function handleCellClick(e) {
+            if (gameOver) return;
+            const index = parseInt(e.target.dataset.index);
+            if (board[index] || currentTurn !== player || movesAvailable <= 0) {
+                if (movesAvailable <= 0) {
+                    alert('You need to answer a math question correctly to make a move!');
+                }
+                return;
+            }
+            board[index] = player;
+            e.target.textContent = player;
+            movesAvailable--;
+            checkGameStatus();
+            if (!gameOver) {
+                currentTurn = computer;
+                computerMove();
+            }
+        }
+
+        function computerMove() {
+            let move = findBestMove();
+            if (move !== -1) {
+                board[move] = computer;
+                document.querySelector(`[data-index="${move}"]`).textContent = computer;
+                checkGameStatus();
+                currentTurn = player;
+            }
+        }
+
+        function findBestMove() {
+            // Check for win
+            for (let i = 0; i < 9; i++) {
+                if (!board[i]) {
+                    board[i] = computer;
+                    if (checkWin(computer)) return i;
+                    board[i] = null;
+                }
+            }
+            // Block player win
+            for (let i = 0; i < 9; i++) {
+                if (!board[i]) {
+                    board[i] = player;
+                    if (checkWin(player)) {
+                        board[i] = null;
+                        return i;
+                    }
+                    board[i] = null;
+                }
+            }
+            // Random available
+            let available = board.map((v, i) => v ? -1 : i).filter(i => i !== -1);
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        function checkWin(p) {
+            const wins = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+            return wins.some(combo => combo.every(i => board[i] === p));
+        }
+
+        function checkDraw() {
+            return board.every(cell => cell !== null);
+        }
+
+        function checkGameStatus() {
+            if (checkWin(player)) {
+                gameOver = true;
+                tttEndTime = Date.now();
+                alert(`${username} wins!`);
+                saveAndShowLeaderboards('Win');
+            } else if (checkWin(computer)) {
+                gameOver = true;
+                tttEndTime = Date.now();
+                alert('Computer wins!');
+                saveAndShowLeaderboards('Loss');
+            } else if (checkDraw()) {
+                gameOver = true;
+                tttEndTime = Date.now();
+                alert('It\'s a draw!');
+                saveAndShowLeaderboards('Draw');
+            }
+        }
+
+        function saveAndShowLeaderboards(outcome) {
+            const tttTime = (tttEndTime - tttStartTime) / 1000; // seconds
+            const mathTime = totalMathTime / 1000; // seconds
+            leaderboards.push({ name: username, mathTime, mathCorrect: correctAnswers, tttTime, outcome });
+            localStorage.setItem('leaderboards', JSON.stringify(leaderboards));
+            showLeaderboards();
+        }
+
+        function showLeaderboards() {
+            // Math leaderboard: max correct desc, then min time asc
+            const mathSorted = [...leaderboards].sort((a, b) => b.mathCorrect - a.mathCorrect || a.mathTime - b.mathTime);
+            const mathTable = document.getElementById('math-leaderboard');
+            mathTable.innerHTML = '<tr><th>Name</th><th>Correct Answers</th><th>Time (s)</th></tr>';
+            mathSorted.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${entry.name}</td><td>${entry.mathCorrect}</td><td>${entry.mathTime.toFixed(2)}</td>`;
+                mathTable.appendChild(row);
+            });
+
+            // TTT leaderboard: wins and draws, min time asc
+            const tttSorted = leaderboards.filter(e => e.outcome !== 'Loss').sort((a, b) => a.tttTime - b.tttTime);
+            const tttTable = document.getElementById('ttt-leaderboard');
+            tttTable.innerHTML = '<tr><th>Name</th><th>Outcome</th><th>Time (s)</th></tr>';
+            tttSorted.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${entry.name}</td><td>${entry.outcome}</td><td>${entry.tttTime.toFixed(2)}</td>`;
+                tttTable.appendChild(row);
+            });
+
+            document.getElementById('leaderboards').style.display = 'block';
+        }
+
+        document.getElementById('submit').addEventListener('click', checkAnswer);
+        document.getElementById('close-leaderboard').addEventListener('click', () => {
+            document.getElementById('leaderboards').style.display = 'none';
+            // Reset game
+            board = Array(9).fill(null);
+            movesAvailable = 0;
+            correctAnswers = 0;
+            totalMathTime = 0;
+            tttStartTime = null;
+            gameOver = false;
+            currentTurn = player;
+            initBoard();
+            generateQuestion();
+        });
+
+        // Initialize
+        generateQuestion();
+        initBoard();
+    </script>
+</body>
+</html>
