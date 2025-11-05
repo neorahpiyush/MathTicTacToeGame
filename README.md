@@ -32,7 +32,7 @@ After the game ends:
 - Encourages **fast recall of multiplication/division facts**.
 ---
 ## Tech Details
-- Built with **HTML, CSS, and JavaScript**
+- Built with **HTML**
 - Hosted for free on **GitHub Pages**
 - Uses **localStorage** for leaderboards
 - Fully **offline-capable** after first load
