@@ -5,6 +5,8 @@ Fun math + tic-tac-toe game for students
 [Play Now!](https://neorahpiyush.github.io/MathTicTacToeGame/)  
 *(Click the link above to start playing instantly — no download needed!)*
 ---
+This is my first experiment with Grok AI for creating a game. 
+---
 ## How to Play
 1. **Enter your name** when the game starts.
 2. **Answer a 6th-grade math question** (multiplication or division from 2×1 to 12×10).
