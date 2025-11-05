@@ -2,7 +2,7 @@
 Fun math + tic-tac-toe game for students
 # Math Tic-Tac-Toe Challenge  
 **Learn Multiplication & Division While Playing Tic-Tac-Toe!**
-[Play Now!](https://neorahpiyush.github.io/math-tic-tac-toe/)  
+[Play Now!](https://neorahpiyush.github.io/MathTicTacToeGame/)  
 *(Click the link above to start playing instantly — no download needed!)*
 ---
 ## How to Play
