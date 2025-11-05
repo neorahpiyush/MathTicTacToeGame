@@ -1,319 +1,677 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Tic Tac Toe Game</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Math Tic-Tac-Toe</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #container {
-            display: flex;
-            width: 100%;
-        }
-        #left-screen, #right-screen {
-            width: 50%;
-            padding: 20px;
-            box-sizing: border-box;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* iPhone Frame */
+        .iphone {
+            width: 360px;
+            height: 740px;
+            background: #000;
+            border-radius: 50px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .iphone::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: 180px; height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            padding: 40px 20px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Lock Screen */
+        #lock-screen {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
             justify-content: center;
         }
-        #left-screen {
-            background-color: #f0f8ff;
+
+        #lock-time {
+            font-size: 64px;
+            font-weight: 200;
+            letter-spacing: -2px;
         }
-        #right-screen {
-            background-color: #fff0f0;
+
+        #lock-date {
+            font-size: 20px;
+            margin-bottom: 30px;
+            opacity: 0.8;
         }
-        #question {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        #answer {
-            font-size: 18px;
-            padding: 10px;
-            width: 200px;
+
+        #username-input {
+            width: 240px;
+            padding: 12px;
+            font-size: 20px;
             text-align: center;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 12px;
+            color: white;
+            margin: 0 auto 20px;
+            font-weight: 500;
         }
-        #submit {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
+
+        #username-input::placeholder {
+            color: rgba(255,255,255,0.7);
         }
-        #board {
+
+        #numpad {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 5px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 240px;
+            margin: 0 auto 20px;
         }
-        .cell {
-            width: 100px;
-            height: 100px;
-            background-color: #eee;
+
+        .numkey {
+            width: 70px; height: 70px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 28px;
+            font-weight: 300;
             cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(10px);
         }
-        .cell:hover {
-            background-color: #ddd;
+
+        .numkey:active {
+            background: rgba(255,255,255,0.3);
+            transform: scale(0.95);
         }
-        #leaderboards {
+
+        .numkey.empty { visibility: hidden; }
+
+        /* Game Container - TWO iPHONES ONLY */
+        #game-container {
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border: 1px solid black;
-            z-index: 10;
-            width: 80%;
-            max-height: 80%;
-            overflow-y: auto;
+            flex-direction: row;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
         }
-        #close-leaderboard {
-            margin-top: 10px;
-            padding: 10px;
+
+        .game-iphone {
+            flex: 1;
+            min-width: 340px;
+            max-width: 360px;
+        }
+
+        .game-screen {
+            height: 100%;
+            background: #f8f9fa;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e3c72;
+            text-align: center;
+        }
+
+        #math-question {
+            font-size: 28px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 500;
+            min-height: 40px;
+        }
+
+        #math-answer {
+            width: 80%;
+            padding: 12px;
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 80%;
+            padding: 12px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 20px auto;
+            width: 240px;
+        }
+
+        .cell {
+            width: 76px; height: 76px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cell:hover { background: #f0f0f0; }
+        .cell.x { color: #007AFF; }
+        .cell.o { color: #FF3B30; }
+
+        /* Leaderboard */
+        .leaderboard-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: linear-gradient(145deg, #8B4513, #D2691E);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .leaderboard-container::before {
+            content: '';
+            position: absolute;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border-radius: 25px;
+            z-index: -1;
+        }
+
+        .banner {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B4513;
+            text-align: center;
+            padding: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            background: #FFF8DC;
+            border: 3px solid #8B4513;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section h3 {
+            text-align: center;
+            color: #8B4513;
+            font-size: 20px;
+            margin-bottom: 10px;
+            text-decoration: underline;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #D2691E;
+        }
+
+        th {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B4513;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .medal {
+            font-size: 20px;
+            animation: bounce 1s infinite alternate;
+            margin-right: 5px;
+        }
+
+        .gold {
+            color: #FFD700;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+            animation: shine 2s infinite;
+        }
+
+        .silver { color: #C0C0C0; }
+        .bronze { color: #CD7F32; }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        @keyframes shine {
+            0%, 100% { text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700; }
+            50% { text-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700, 0 0 60px #FFD700; }
+        }
+
+        .play-again {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #007AFF, #0056CC);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #fff;
+            text-align: center;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 800px) {
+            #game-container { flex-direction: column; align-items: center; }
+            .game-iphone { width: 100%; max-width: 360px; }
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <div id="left-screen">
-            <div id="question"></div>
-            <input type="number" id="answer" placeholder="Enter your answer">
-            <button id="submit">Submit</button>
-            <div id="math-feedback"></div>
-        </div>
-        <div id="right-screen">
-            <div id="board"></div>
-            <div id="ttt-feedback"></div>
+
+    <!-- Lock Screen iPhone (will be removed after unlock) -->
+    <div id="lock-iphone" class="iphone">
+        <div id="lock-screen" class="screen">
+            <div id="lock-time">9:41</div>
+            <div id="lock-date">Monday, October 31</div>
+            <input type="text" id="username-input" maxlength="12" placeholder="Enter your name" />
+            <div id="numpad">
+                <div class="numkey" data-val="1">1</div>
+                <div class="numkey" data-val="2">2</div>
+                <div class="numkey" data-val="3">3</div>
+                <div class="numkey" data-val="4">4</div>
+                <div class="numkey" data-val="5">5</div>
+                <div class="numkey" data-val="6">6</div>
+                <div class="numkey" data-val="7">7</div>
+                <div class="numkey" data-val="8">8</div>
+                <div class="numkey" data-val="9">9</div>
+                <div class="numkey empty"></div>
+                <div class="numkey" data-val="0">0</div>
+                <div class="numkey empty"></div>
+            </div>
+            <button id="unlock-btn" style="display:none;">Unlock Game</button>
         </div>
     </div>
-    <div id="leaderboards">
-        <h2>Math Leaderboard</h2>
-        <table id="math-leaderboard"></table>
-        <h2>Tic Tac Toe Leaderboard</h2>
-        <table id="ttt-leaderboard"></table>
-        <button id="close-leaderboard">Close</button>
+
+    <!-- Game Screens - TWO iPHONES ONLY -->
+    <div id="game-container">
+        <!-- Math Game iPhone -->
+        <div class="iphone game-iphone">
+            <div class="screen game-screen">
+                <div class="game-title">Math Challenge</div>
+                <div id="math-question">Loading...</div>
+                <input id="math-answer" type="number" placeholder="Answer" />
+                <button id="submit-math">Submit</button>
+            </div>
+        </div>
+
+        <!-- Tic-Tac-Toe iPhone -->
+        <div class="iphone game-iphone">
+            <div class="screen game-screen">
+                <div class="game-title">Tic-Tac-Toe vs AI</div>
+                <div id="board"></div>
+                <div id="status" style="margin-top:15px; font-size:14px; color:#666;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Imagined by Neorah & made in America
     </div>
 
     <script>
-        let username = prompt("Please enter your username:");
-        if (!username) username = "Player";
+        // === LOCK SCREEN ===
+        const usernameInput = document.getElementById('username-input');
+        const numkeys = document.querySelectorAll('.numkey[data-val]');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const lockIphone = document.getElementById('lock-iphone');  // The full iPhone
+        const gameContainer = document.getElementById('game-container');
 
-        // Math game variables
-        let currentQuestion = {};
+        let username = '';
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const date = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('lock-time').textContent = time;
+            document.getElementById('lock-date').textContent = date;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        numkeys.forEach(key => {
+            key.addEventListener('click', () => {
+                if (username.length < 12) {
+                    username += key.dataset.val;
+                    usernameInput.value = username;
+                    checkUnlockButton();
+                }
+            });
+        });
+
+        usernameInput.addEventListener('input', () => {
+            username = usernameInput.value;
+            checkUnlockButton();
+        });
+
+        function checkUnlockButton() {
+            unlockBtn.style.display = username.trim().length > 0 ? 'block' : 'none';
+        }
+
+        unlockBtn.addEventListener('click', () => {
+            if (username.trim()) unlockGame();
+        });
+
+        usernameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && username.trim()) unlockGame();
+        });
+
+        function unlockGame() {
+            if (!username.trim()) return alert("Enter a name!");
+            // FULLY REMOVE the lock screen iPhone
+            lockIphone.remove();
+            gameContainer.style.display = 'flex';
+            initGame();
+        }
+
+        // === GAME LOGIC ===
+        let canMove = false;
         let mathStartTime;
         let totalMathTime = 0;
         let correctAnswers = 0;
-
-        // Tic Tac Toe variables
-        let board = Array(9).fill(null);
-        let player = 'X';
-        let computer = 'O';
-        let currentTurn = player;
-        let movesAvailable = 0;
-        let tttStartTime;
-        let tttEndTime;
+        let gameStartTime = Date.now();
         let gameOver = false;
-
-        // Leaderboard
-        let leaderboards = JSON.parse(localStorage.getItem('leaderboards')) || [];
+        let board = Array(9).fill(null);
+        const player = 'X';
+        const computer = 'O';
+        let currentQuestionAnswer;
 
         function generateQuestion() {
-            const type = Math.random() < 0.5 ? 'multiplication' : 'division';
-            let a, b;
-            if (type === 'multiplication') {
-                a = Math.floor(Math.random() * 11) + 2; // 2-12
-                b = Math.floor(Math.random() * 10) + 1; // 1-10
-                currentQuestion = { q: `${a} × ${b} = ?`, ans: a * b, type };
-            } else {
-                b = Math.floor(Math.random() * 11) + 2; // 2-12
-                const product = b * (Math.floor(Math.random() * 10) + 1); // ensure divisible
-                currentQuestion = { q: `${product} ÷ ${b} = ?`, ans: product / b, type };
-            }
-            document.getElementById('question').textContent = currentQuestion.q;
             mathStartTime = Date.now();
-        }
-
-        function checkAnswer() {
-            const userAnswer = parseInt(document.getElementById('answer').value);
-            const timeTaken = Date.now() - mathStartTime;
-            if (userAnswer === currentQuestion.ans) {
-                totalMathTime += timeTaken;
-                correctAnswers++;
-                movesAvailable++;
-                document.getElementById('math-feedback').textContent = 'Correct! You can make a move in Tic Tac Toe.';
-                if (!tttStartTime) tttStartTime = Date.now();
+            const a = Math.floor(Math.random() * 11) + 2;
+            const b = Math.floor(Math.random() * 10) + 1;
+            const isMultiplication = Math.random() < 0.5;
+            let question, answer;
+            if (isMultiplication) {
+                question = `${a} × ${b} = ?`;
+                answer = a * b;
             } else {
-                alert('Wrong answer! Try again.');
-                document.getElementById('math-feedback').textContent = 'Incorrect. Please try again.';
+                const product = a * b;
+                question = `${product} ÷ ${a} = ?`;
+                answer = b;
             }
-            document.getElementById('answer').value = '';
-            generateQuestion();
+            document.getElementById('math-question').textContent = question;
+            return answer;
         }
 
-        function initBoard() {
+        function initGame() {
+            currentQuestionAnswer = generateQuestion();
+            createBoard();
+            updateStatus("Answer math to move!");
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('status').textContent = msg;
+        }
+
+        document.getElementById('submit-math').addEventListener('click', () => {
+            if (gameOver) return;
+            const userAnswer = parseInt(document.getElementById('math-answer').value);
+            if (isNaN(userAnswer)) return;
+
+            if (userAnswer === currentQuestionAnswer) {
+                totalMathTime += Date.now() - mathStartTime;
+                correctAnswers++;
+                canMove = true;
+                updateStatus("Correct! Tap a cell to place X");
+                currentQuestionAnswer = generateQuestion();
+            } else {
+                updateStatus("Wrong! Try again.");
+            }
+            document.getElementById('math-answer').value = '';
+        });
+
+        function createBoard() {
             const boardDiv = document.getElementById('board');
             boardDiv.innerHTML = '';
             for (let i = 0; i < 9; i++) {
                 const cell = document.createElement('div');
-                cell.classList.add('cell');
+                cell.className = 'cell';
                 cell.dataset.index = i;
-                cell.addEventListener('click', handleCellClick);
                 boardDiv.appendChild(cell);
             }
+            renderBoard();
+            addCellListeners();
         }
 
-        function handleCellClick(e) {
-            if (gameOver) return;
-            const index = parseInt(e.target.dataset.index);
-            if (board[index] || currentTurn !== player || movesAvailable <= 0) {
-                if (movesAvailable <= 0) {
-                    alert('You need to answer a math question correctly to make a move!');
-                }
-                return;
-            }
-            board[index] = player;
-            e.target.textContent = player;
-            movesAvailable--;
-            checkGameStatus();
-            if (!gameOver) {
-                currentTurn = computer;
-                computerMove();
-            }
-        }
-
-        function computerMove() {
-            let move = findBestMove();
-            if (move !== -1) {
-                board[move] = computer;
-                document.querySelector(`[data-index="${move}"]`).textContent = computer;
-                checkGameStatus();
-                currentTurn = player;
-            }
-        }
-
-        function findBestMove() {
-            // Check for win
-            for (let i = 0; i < 9; i++) {
-                if (!board[i]) {
-                    board[i] = computer;
-                    if (checkWin(computer)) return i;
-                    board[i] = null;
-                }
-            }
-            // Block player win
-            for (let i = 0; i < 9; i++) {
-                if (!board[i]) {
-                    board[i] = player;
-                    if (checkWin(player)) {
-                        board[i] = null;
-                        return i;
-                    }
-                    board[i] = null;
-                }
-            }
-            // Random available
-            let available = board.map((v, i) => v ? -1 : i).filter(i => i !== -1);
-            return available[Math.floor(Math.random() * available.length)];
+        function renderBoard() {
+            document.querySelectorAll('.cell').forEach((cell, i) => {
+                cell.textContent = board[i] || '';
+                cell.className = 'cell';
+                if (board[i] === 'X') cell.classList.add('x');
+                if (board[i] === 'O') cell.classList.add('o');
+            });
         }
 
         function checkWin(p) {
-            const wins = [
-                [0,1,2], [3,4,5], [6,7,8],
-                [0,3,6], [1,4,7], [2,5,8],
-                [0,4,8], [2,4,6]
-            ];
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
             return wins.some(combo => combo.every(i => board[i] === p));
         }
 
-        function checkDraw() {
+        function isDraw() {
             return board.every(cell => cell !== null);
         }
 
-        function checkGameStatus() {
-            if (checkWin(player)) {
-                gameOver = true;
-                tttEndTime = Date.now();
-                alert(`${username} wins!`);
-                saveAndShowLeaderboards('Win');
-            } else if (checkWin(computer)) {
-                gameOver = true;
-                tttEndTime = Date.now();
-                alert('Computer wins!');
-                saveAndShowLeaderboards('Loss');
-            } else if (checkDraw()) {
-                gameOver = true;
-                tttEndTime = Date.now();
-                alert('It\'s a draw!');
-                saveAndShowLeaderboards('Draw');
+        function minimax(depth, isMax) {
+            if (checkWin(computer)) return 10 - depth;
+            if (checkWin(player)) return depth - 10;
+            if (isDraw()) return 0;
+
+            if (isMax) {
+                let best = -Infinity;
+                for (let i = 0; i < 9; i++) if (board[i] === null) {
+                    board[i] = computer;
+                    best = Math.max(best, minimax(depth + 1, false));
+                    board[i] = null;
+                }
+                return best;
+            } else {
+                let best = Infinity;
+                for (let i = 0; i < 9; i++) if (board[i] === null) {
+                    board[i] = player;
+                    best = Math.min(best, minimax(depth + 1, true));
+                    board[i] = null;
+                }
+                return best;
             }
         }
 
-        function saveAndShowLeaderboards(outcome) {
-            const tttTime = (tttEndTime - tttStartTime) / 1000; // seconds
-            const mathTime = totalMathTime / 1000; // seconds
-            leaderboards.push({ name: username, mathTime, mathCorrect: correctAnswers, tttTime, outcome });
-            localStorage.setItem('leaderboards', JSON.stringify(leaderboards));
-            showLeaderboards();
+        function getBestMove() {
+            let bestVal = -Infinity, bestMove = -1;
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === null) {
+                    board[i] = computer;
+                    const val = minimax(0, false);
+                    board[i] = null;
+                    if (val > bestVal) { bestMove = i; bestVal = val; }
+                }
+            }
+            return bestMove;
         }
 
-        function showLeaderboards() {
-            // Math leaderboard: max correct desc, then min time asc
-            const mathSorted = [...leaderboards].sort((a, b) => b.mathCorrect - a.mathCorrect || a.mathTime - b.mathTime);
-            const mathTable = document.getElementById('math-leaderboard');
-            mathTable.innerHTML = '<tr><th>Name</th><th>Correct Answers</th><th>Time (s)</th></tr>';
-            mathSorted.forEach(entry => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${entry.name}</td><td>${entry.mathCorrect}</td><td>${entry.mathTime.toFixed(2)}</td>`;
-                mathTable.appendChild(row);
-            });
+        function addCellListeners() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('click', (e) => {
+                    if (gameOver) return;
+                    if (!canMove) {
+                        updateStatus("Answer math first!");
+                        return;
+                    }
+                    const i = parseInt(e.target.dataset.index);
+                    if (board[i] !== null) return;
 
-            // TTT leaderboard: wins and draws, min time asc
-            const tttSorted = leaderboards.filter(e => e.outcome !== 'Loss').sort((a, b) => a.tttTime - b.tttTime);
-            const tttTable = document.getElementById('ttt-leaderboard');
-            tttTable.innerHTML = '<tr><th>Name</th><th>Outcome</th><th>Time (s)</th></tr>';
-            tttSorted.forEach(entry => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${entry.name}</td><td>${entry.outcome}</td><td>${entry.tttTime.toFixed(2)}</td>`;
-                tttTable.appendChild(row);
-            });
+                    board[i] = player;
+                    renderBoard();
+                    canMove = false;
+                    updateStatus("AI thinking...");
 
-            document.getElementById('leaderboards').style.display = 'block';
+                    if (checkWin(player)) { endGame(`${username} wins!`, 'win'); return; }
+                    if (isDraw()) { endGame('Draw!', 'draw'); return; }
+
+                    setTimeout(() => {
+                        const best = getBestMove();
+                        if (best !== -1) {
+                            board[best] = computer;
+                            renderBoard();
+                        }
+
+                        if (checkWin(computer)) { endGame('AI wins!', 'loss'); return; }
+                        if (isDraw()) { endGame('Draw!', 'draw'); return; }
+
+                        updateStatus("Answer math to move!");
+                    }, 500);
+                });
+            });
         }
 
-        document.getElementById('submit').addEventListener('click', checkAnswer);
-        document.getElementById('close-leaderboard').addEventListener('click', () => {
-            document.getElementById('leaderboards').style.display = 'none';
-            // Reset the game
-            board = Array(9).fill(null);
-            movesAvailable = 0;
-            correctAnswers = 0;
-            totalMathTime = 0;
-            tttStartTime = null;
-            gameOver = false;
-            currentTurn = player;
-            initBoard();
-            generateQuestion();
-        });
+        function endGame(outcome, result) {
+            gameOver = true;
+            const gameTime = ((Date.now() - gameStartTime) / 1000).toFixed(1);
+            updateStatus(outcome);
 
-        // Initialize
-        generateQuestion();
-        initBoard();
+            // Math Leaderboard
+            let mathLeaders = JSON.parse(localStorage.getItem('mathLeaders') || '[]');
+            const avgTime = correctAnswers > 0 ? parseFloat((totalMathTime / 1000 / correctAnswers).toFixed(2)) : null;
+            mathLeaders.push({ name: username, correct: correctAnswers, avgTime });
+            mathLeaders.sort((a, b) => (a.avgTime || Infinity) - (b.avgTime || Infinity));
+            localStorage.setItem('mathLeaders', JSON.stringify(mathLeaders.slice(0, 50)));
+
+            // TTT Leaderboard
+            if (result !== 'loss') {
+                let tttLeaders = JSON.parse(localStorage.getItem('tttLeaders') || '[]');
+                tttLeaders.push({ name: username, outcome, time: parseFloat(gameTime), result });
+                tttLeaders.sort((a, b) => {
+                    const prioA = a.result === 'win' ? 0 : a.result === 'draw' ? 1 : 2;
+                    const prioB = b.result === 'win' ? 0 : b.result === 'draw' ? 1 : 2;
+                    if (prioA !== prioB) return prioA - prioB;
+                    return a.time - b.time;
+                });
+                localStorage.setItem('tttLeaders', JSON.stringify(tttLeaders.slice(0, 50)));
+            }
+
+            // Leaderboard HTML
+            let html = `
+                <div class="leaderboard-container">
+                    <div class="banner">LEADER BOARD</div>
+                    <div class="section">
+                        <h3>Math Masters</h3>
+                        <table>
+                            <tr><th>Rank</th><th>Name</th><th>Questions</th><th>Avg Time (s)</th></tr>
+                            ${mathLeaders.slice(0,10).map((l, i) => {
+                                const medal = i === 0 ? '<span class="medal gold">1st</span>' :
+                                           i === 1 ? '<span class="medal silver">2nd</span>' :
+                                           i === 2 ? '<span class="medal bronze">3rd</span>' : i + 1;
+                                const avgDisplay = l.avgTime === null ? 'N/A' : l.avgTime;
+                                return `<tr><td>${medal}</td><td>${l.name}</td><td>${l.correct}</td><td>${avgDisplay}</td></tr>`;
+                            }).join('')}
+                        </table>
+                    </div>
+                    <div class="section">
+                        <h3>Tic-Tac-Toe Champions</h3>
+                        <table>
+                            <tr><th>Rank</th><th>Name</th><th>Result</th><th>Time (s)</th></tr>
+                            ${(() => {
+                                const tttData = JSON.parse(localStorage.getItem('tttLeaders') || '[]');
+                                return tttData.slice(0,10).map((l, i) => {
+                                    const medal = i === 0 ? '<span class="medal gold">1st</span>' :
+                                               i === 1 ? '<span class="medal silver">2nd</span>' :
+                                               i === 2 ? '<span class="medal bronze">3rd</span>' : i + 1;
+                                    return `<tr><td>${medal}</td><td>${l.name}</td><td>${l.outcome}</td><td>${l.time}</td></tr>`;
+                                }).join('');
+                            })()}
+                        </table>
+                    </div>
+                    <button class="play-again" onclick="location.reload()">Play Again</button>
+                </div>
+            `;
+            setTimeout(() => {
+                document.body.innerHTML = html + document.querySelector('.footer').outerHTML;
+            }, 1500);
+        }
     </script>
 </body>
 </html>
-
